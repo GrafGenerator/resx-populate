@@ -1,4 +1,8 @@
-﻿using System.Management.Automation;
+﻿using System;
+using System.Globalization;
+using System.IO;
+using System.Linq;
+using System.Management.Automation;
 
 namespace GrafGenerator.ResxPopulate
 {
@@ -34,12 +38,39 @@ namespace GrafGenerator.ResxPopulate
 
         protected override void BeginProcessing()
         {
-            
+            if (!File.Exists(_path))
+            {
+                ThrowTerminatingError(new ErrorRecord(new FileNotFoundException("Input RESX file not found.", _path),
+                    "FileNotFound", ErrorCategory.InvalidArgument, _path));
+            }
+
+            _cultures = _cultures
+                .Select(c =>
+                {
+                    try
+                    {
+                        return CultureInfo.CreateSpecificCulture(c).Name;
+                    }
+                    catch (Exception)
+                    {
+                        WriteWarning(string.Format("Cannot bind culture for param '{0}'", c));
+                        return null;
+                    }
+                })
+                .Where(c => !string.IsNullOrWhiteSpace(c))
+                .ToArray();
         }
 
         protected override void ProcessRecord()
         {
-            WriteVerbose("Processing file: " + Path);
+            var fileName = System.IO.Path.GetFileNameWithoutExtension(_path);
+
+            foreach (var culture in _cultures)
+            {
+                var newPath = fileName + "." + culture + ".resx";
+                WriteVerbose(string.Format("Processing file '{0}' to '{1}' ", _path, newPath));
+                File.Copy(_path, newPath);
+            }
         }
 
         #endregion

@@ -23,8 +23,7 @@ namespace GrafGenerator.ResxPopulate
         }
 
 
-        [Parameter(Position = 1, ParameterSetName = "DefaultParameterSet", Mandatory = true)]
-        [ValidateNotNullOrEmpty]
+        [Parameter(Position = 1, ParameterSetName = "DefaultParameterSet", Mandatory = false)]
         public string[] Cultures
         {
             get { return _cultures; }
@@ -42,6 +41,12 @@ namespace GrafGenerator.ResxPopulate
             {
                 ThrowTerminatingError(new ErrorRecord(new FileNotFoundException("Input RESX file not found.", _path),
                     "FileNotFound", ErrorCategory.InvalidArgument, _path));
+            }
+
+            if (_cultures == null || _cultures.Length == 0)
+            {
+                // init defaults
+                _cultures = new[] {"ar-AE", "cs-CZ", "el-GR", "es-CL", "kk-KZ", "ky-KG", "ru-RU", "uk-UA"};
             }
 
             _cultures = _cultures
